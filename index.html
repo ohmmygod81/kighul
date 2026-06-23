@@ -2,216 +2,227 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>전기기사 CBT</title>
-
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --blue:#1990ff;--blue-light:#e8f4ff;--blue-dark:#0070e0;
+  --dark:#1a1a2e;
   --green:#22c55e;--amber:#f59e0b;--red:#ef4444;
-  --bg:#f5f7fa;--card:#fff;--border:#e8e8e8;
+  --bg:#f2f2f7;--card:#fff;--border:#e0e0e0;
   --text1:#111;--text2:#555;--text3:#999;
-  --radius:12px;--radius-sm:8px;
+  --radius:14px;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;padding-bottom:80px}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg)}
 
-/* ── 헤더 ── */
-.header{background:var(--blue);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.header-title{color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px}
-.header-icon{color:rgba(255,255,255,.9);font-size:22px;cursor:pointer;padding:4px}
+/* ══ 리스트 뷰 ══ */
+#listView{display:block}
+#studyView{display:none;position:fixed;inset:0;background:#f2f2f7;z-index:500;flex-direction:column}
+#studyView.active{display:flex}
 
-/* ── 과목 탭 ── */
-.subject-bar{background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;position:sticky;top:52px;z-index:99}
-.subject-bar::-webkit-scrollbar{display:none}
-.stab{flex-shrink:0;padding:11px 15px;font-size:13px;color:var(--text3);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;font-weight:500;transition:all .15s}
-.stab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.lheader{background:#fff;padding:14px 16px 0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.lheader-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px}
+.lheader-title{font-size:18px;font-weight:700}
+.add-btn{width:36px;height:36px;border-radius:50%;border:none;background:#f2f2f7;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;color:var(--dark)}
+.stab-wrap{display:flex;overflow-x:auto;scrollbar-width:none;gap:4px;padding-bottom:12px}
+.stab-wrap::-webkit-scrollbar{display:none}
+.stab{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;background:#f2f2f7;color:var(--text2);border:none}
+.stab.on{background:var(--dark);color:#fff}
 
-/* ── 필터/통계 ── */
-.filter-wrap{background:#fff;border-bottom:1px solid var(--border);padding:8px 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
-.filter-wrap::-webkit-scrollbar{display:none}
-.chip{flex-shrink:0;padding:5px 13px;border-radius:20px;border:1px solid var(--border);font-size:12px;cursor:pointer;background:#fff;color:var(--text2);font-weight:500;transition:all .12s}
-.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
-.chip.chip-o.on{background:var(--green);border-color:var(--green)}
-.chip.chip-t.on{background:var(--amber);border-color:var(--amber)}
-.chip.chip-x.on{background:var(--red);border-color:var(--red)}
+.filter-bar{background:#fff;padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
+.filter-bar::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:5px 13px;border-radius:20px;border:1px solid var(--border);font-size:12px;cursor:pointer;background:#fff;color:var(--text2);font-weight:500;border:none;background:#f2f2f7}
+.chip.on{background:var(--dark);color:#fff}
+.chip.c-o.on{background:var(--green)}
+.chip.c-t.on{background:var(--amber)}
+.chip.c-x.on{background:var(--red)}
 
-.stats-bar{display:flex;background:#fff;border-bottom:1px solid var(--border)}
-.stat-item{flex:1;padding:8px 0;text-align:center;border-right:1px solid var(--border)}
-.stat-item:last-child{border-right:none}
-.stat-num{font-size:17px;font-weight:700;color:var(--text1)}
-.stat-num.s-o{color:var(--green)}.stat-num.s-t{color:var(--amber)}.stat-num.s-x{color:var(--red)}.stat-num.s-n{color:var(--text3)}
-.stat-label{font-size:10px;color:var(--text3);margin-top:1px}
+.stats-row{display:flex;background:#fff;border-bottom:1px solid var(--border)}
+.stat-cell{flex:1;padding:8px 0;text-align:center;border-right:1px solid var(--border)}
+.stat-cell:last-child{border-right:none}
+.stat-n{font-size:16px;font-weight:700}
+.s-o{color:var(--green)}.s-t{color:var(--amber)}.s-x{color:var(--red)}.s-g{color:var(--text3)}
+.stat-l{font-size:10px;color:var(--text3);margin-top:1px}
 
-/* ── 카드 리스트 ── */
-.card-list{padding:12px}
-.q-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px;overflow:hidden}
-
-.q-top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)}
-.q-badges{display:flex;gap:6px;align-items:center}
-.q-no{font-size:13px;font-weight:700;color:var(--text1)}
+.card-list{padding:12px 16px 100px}
+.q-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px;overflow:hidden}
+.q-card-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)}
+.q-meta{display:flex;align-items:center;gap:6px}
+.q-num{font-size:13px;font-weight:700}
 .badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
-.badge-sub{background:#f0f4ff;color:#3b5bdb}
-.badge-h{background:#fef2f2;color:#b91c1c}
-.badge-m{background:#fffbeb;color:#b45309}
-.badge-e{background:#f0fdf4;color:#166534}
-.read-info{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:3px}
+.b-sub{background:#f0f4ff;color:#3b5bdb}
+.b-h{background:#fef2f2;color:#b91c1c}
+.b-m{background:#fffbeb;color:#b45309}
+.b-e{background:#f0fdf4;color:#166534}
+.q-actions{display:flex;gap:8px;align-items:center}
+.del-btn{background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;padding:4px}
+.q-img img{width:100%;display:block}
+.q-no-img{padding:30px;text-align:center;color:var(--text3);font-size:13px}
 
-/* 문제 영역 */
-.q-body{padding:14px}
-.q-img-wrap{width:100%;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:0;background:#f8f8f8;border:1px solid var(--border)}
-.q-img-wrap img{width:100%;display:block}
-.q-placeholder{padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--text3);font-size:13px}
-.q-placeholder svg{width:32px;height:32px;opacity:.4}
+.mini-eval{display:flex;border-top:1px solid var(--border)}
+.me-btn{flex:1;padding:10px 0;background:none;border:none;border-right:1px solid var(--border);cursor:pointer;font-size:18px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:background .1s}
+.me-btn:last-child{border-right:none}
+.me-lbl{font-size:10px;color:var(--text3)}
+.me-btn.ev-o{background:#f0fdf4}.me-btn.ev-t{background:#fffbeb}.me-btn.ev-x{background:#fef2f2}
+.open-study-btn{width:100%;padding:12px;border:none;border-top:1px solid var(--border);background:none;color:var(--dark);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.3px}
+.open-study-btn:active{background:#f2f2f7}
 
-/* 해설 토글 버튼 */
-.reveal-btn{width:100%;padding:12px;background:none;border:none;border-top:1px solid var(--border);font-size:13px;cursor:pointer;color:var(--blue);display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500;transition:background .12s}
-.reveal-btn:active{background:var(--blue-light)}
+.fab{position:fixed;bottom:24px;right:20px;width:54px;height:54px;border-radius:50%;background:var(--dark);color:#fff;border:none;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:200}
 
-/* 해설 영역 */
-.ans-section{display:none;border-top:1px solid var(--border);background:var(--blue-light)}
-.ans-section.open{display:block}
-.ans-inner{padding:14px}
-.ans-label{font-size:11px;font-weight:700;color:var(--blue);margin-bottom:10px;letter-spacing:.5px}
-.ans-img-wrap{width:100%;border-radius:var(--radius-sm);overflow:hidden;border:1px solid #c5deff;background:#fff}
-.ans-img-wrap img{width:100%;display:block}
-.ans-no-img{padding:20px;text-align:center;color:#7ab3e0;font-size:13px}
+/* ══ 학습 뷰 ══ */
+.sv-header{background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0}
+.sv-back{background:none;border:none;cursor:pointer;font-size:26px;color:var(--text2);line-height:1;padding:0 8px 0 0}
+.sv-title{font-size:15px;font-weight:600}
+.sv-mode{display:flex;gap:4px}
+.sv-mBtn{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:12px;cursor:pointer;color:var(--text2)}
+.sv-mBtn.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+.sv-prog{height:3px;background:#eee;flex-shrink:0}
+.sv-prog-fill{height:100%;background:var(--dark);transition:width .3s}
 
-/* 자기평가 */
-.eval-row{display:flex;border-top:1px solid var(--border)}
-.eval-btn{flex:1;padding:12px 0;background:none;border:none;border-right:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:background .12s;font-size:20px}
-.eval-btn:last-child{border-right:none}
-.eval-btn .elabel{font-size:11px;color:var(--text3);font-weight:500}
-.eval-btn:active{opacity:.7}
-.eval-btn.ev-o{background:#f0fdf4}.eval-btn.ev-t{background:#fffbeb}.eval-btn.ev-x{background:#fef2f2}
+.sv-body{flex:1;overflow-y:auto;padding:16px}
 
-/* ── 빈 상태 ── */
-.empty-state{text-align:center;padding:60px 24px;color:var(--text3)}
-.empty-state svg{width:48px;height:48px;opacity:.3;margin-bottom:12px}
-.empty-state p{font-size:14px;line-height:1.6}
+.sv-qcard{background:#fff;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
+.sv-qcard-top{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
+.sv-qcard-meta{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:700}
+.sv-qimg img{width:100%;display:block}
 
-/* ── FAB ── */
-.fab{position:fixed;bottom:24px;right:20px;width:54px;height:54px;border-radius:50%;background:var(--blue);color:#fff;border:none;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(25,144,255,.4);z-index:200;transition:transform .15s}
-.fab:active{transform:scale(.93)}
+.sv-memo{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:14px;margin-bottom:12px;color:var(--text3);font-size:13px;min-height:56px}
 
-/* ── 모달 ── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end}
+/* 정답 보기 버튼 + 해설 */
+.sv-ans-btn{width:100%;padding:13px;border:none;background:#fff;border-top:1px solid var(--border);font-size:14px;font-weight:600;color:var(--dark);cursor:pointer;letter-spacing:.2px;display:block}
+.sv-ans-btn:active{background:#f2f2f7}
+.sv-ans-section{overflow:hidden;max-height:0;transition:max-height .35s ease}
+.sv-ans-section.open{max-height:2000px}
+.sv-ans-inner{padding:14px;border-top:1px solid var(--border)}
+.sv-ans-lbl{font-size:11px;font-weight:700;color:var(--green);margin-bottom:10px;letter-spacing:.5px}
+.sv-ans-img img{width:100%;display:block;border-radius:8px}
+.sv-ans-noimg{padding:16px;text-align:center;color:var(--text3);font-size:13px}
+
+.sv-footer{background:#fff;border-top:1px solid var(--border);flex-shrink:0;padding:8px 12px;display:flex;gap:8px;align-items:center}
+.sv-ev-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sv-ev-btn.ev-o{background:#f0fdf4;border-color:var(--green)}
+.sv-ev-btn.ev-t{background:#fffbeb;border-color:var(--amber)}
+.sv-ev-btn.ev-x{background:#fef2f2;border-color:var(--red)}
+.sv-spacer{flex:1}
+.sv-nav-btn{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;cursor:pointer;color:var(--text2)}
+.sv-end-btn{padding:10px 18px;border-radius:10px;border:none;background:var(--dark);color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+
+/* ══ 모달 ══ */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:flex-end}
 .modal-bg.open{display:flex}
 .modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding:20px 16px 40px;animation:slideUp .25s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .modal-handle{width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 18px}
-.modal-title{font-size:16px;font-weight:700;color:var(--text1);margin-bottom:18px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:18px}
 .form-row{margin-bottom:14px}
 .form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block}
-.form-select{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;background:#fff;color:var(--text1);-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-.upload-box{border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:20px 16px;text-align:center;cursor:pointer;background:#fafafa;color:var(--text3);font-size:13px;transition:all .15s;position:relative}
-.upload-box:hover{border-color:var(--blue);background:var(--blue-light);color:var(--blue)}
+.form-select{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:15px;background:#fff;-webkit-appearance:none}
+.upload-box{border:1.5px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;background:#fafafa;color:var(--text3);font-size:13px;position:relative;line-height:1.6}
 .upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
-.upload-box svg{width:28px;height:28px;margin-bottom:6px;opacity:.5}
-.upload-preview{width:100%;border-radius:var(--radius-sm);overflow:hidden;margin-top:8px;display:none}
+.upload-preview{display:none;margin-top:8px;border-radius:10px;overflow:hidden}
 .upload-preview img{width:100%;display:block}
 .modal-btns{display:flex;gap:8px;margin-top:20px}
-.btn-cancel{flex:1;padding:13px 0;border:1px solid var(--border);border-radius:var(--radius-sm);background:none;font-size:15px;cursor:pointer;color:var(--text2)}
-.btn-save{flex:2;padding:13px 0;border:none;border-radius:var(--radius-sm);background:var(--blue);color:#fff;font-size:15px;cursor:pointer;font-weight:600}
-.btn-save:disabled{opacity:.5;cursor:not-allowed}
+.btn-cancel{flex:1;padding:13px;border:1px solid var(--border);border-radius:10px;background:none;font-size:15px;cursor:pointer;color:var(--text2)}
+.btn-save{flex:2;padding:13px;border:none;border-radius:10px;background:var(--dark);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.btn-save:disabled{opacity:.4}
 
-/* ── 로딩/토스트 ── */
-.loading{display:none;position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:12px;font-size:14px;color:var(--text2)}
+.loading{display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:900;align-items:center;justify-content:center;flex-direction:column;gap:12px;font-size:14px;color:var(--text2)}
 .loading.show{display:flex}
-.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--dark);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:600;opacity:0;transition:opacity .3s;white-space:nowrap}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1}
-
-/* ── Firebase 설정 배너 ── */
-.setup-banner{background:#fff8e1;border:1px solid #ffe082;border-radius:var(--radius);margin:12px;padding:14px;font-size:13px;color:#795548;line-height:1.6}
-.setup-banner strong{color:#e65100;display:block;margin-bottom:4px;font-size:14px}
-.setup-banner code{background:#fff3e0;padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace}
+.empty-state{text-align:center;padding:60px 24px;color:var(--text3);font-size:14px;line-height:1.9}
 </style>
 </head>
 <body>
 
-<!-- 헤더 -->
-<div class="header">
-  <div class="header-title">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-    전기기사 CBT
-  </div>
-  <div style="display:flex;gap:4px">
-    <div class="header-icon" onclick="toggleSearch()" title="검색">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+<!-- ══ 리스트 화면 ══ -->
+<div id="listView">
+  <div class="lheader">
+    <div class="lheader-top">
+      <div class="lheader-title">⚡ 전기기사 CBT</div>
+      <button class="add-btn" onclick="openModal()">+</button>
+    </div>
+    <div class="stab-wrap" id="stabWrap">
+      <button class="stab on" data-sub="전체">전체</button>
+      <button class="stab" data-sub="전기자기학">전기자기학</button>
+      <button class="stab" data-sub="회로이론">회로이론</button>
+      <button class="stab" data-sub="전력공학">전력공학</button>
+      <button class="stab" data-sub="전기기기">전기기기</button>
+      <button class="stab" data-sub="제어공학">제어공학</button>
+      <button class="stab" data-sub="전기설비">전기설비</button>
     </div>
   </div>
+
+  <div class="filter-bar" id="filterBar">
+    <button class="chip on" data-f="전체">전체</button>
+    <button class="chip c-o" data-f="○">○ 맞음</button>
+    <button class="chip c-t" data-f="△">△ 애매</button>
+    <button class="chip c-x" data-f="×">× 틀림</button>
+    <button class="chip" data-f="미풀이">미풀이</button>
+    <button class="chip" data-f="어려움">🔴 어려움</button>
+    <button class="chip" data-f="보통">🟡 보통</button>
+    <button class="chip" data-f="쉬움">🟢 쉬움</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-cell"><div class="stat-n" id="stTotal">0</div><div class="stat-l">전체</div></div>
+    <div class="stat-cell"><div class="stat-n s-o" id="stO">0</div><div class="stat-l">○ 맞음</div></div>
+    <div class="stat-cell"><div class="stat-n s-t" id="stT">0</div><div class="stat-l">△ 애매</div></div>
+    <div class="stat-cell"><div class="stat-n s-x" id="stX">0</div><div class="stat-l">× 틀림</div></div>
+    <div class="stat-cell"><div class="stat-n s-g" id="stN">0</div><div class="stat-l">미풀이</div></div>
+  </div>
+
+  <div class="card-list" id="cardList">
+    <div class="empty-state" id="emptyState" style="display:none">
+      등록된 문제가 없어요.<br>+ 버튼으로 문제를 추가하세요!
+    </div>
+  </div>
+
+  <button class="fab" onclick="openModal()">+</button>
 </div>
 
-<!-- Firebase 미설정시 배너 (JS에서 숨김 처리) -->
-<div class="setup-banner" id="setupBanner">
-  <strong>⚙️ Firebase 설정 필요</strong>
-  아래 <code>firebaseConfig</code> 부분에 본인의 Firebase 프로젝트 키를 입력하세요.<br>
-  Firebase Console → 프로젝트 설정 → 앱 추가(웹) → SDK 설정 코드 복사
-</div>
+<!-- ══ 학습 화면 ══ -->
+<div id="studyView">
+  <div class="sv-header">
+    <button class="sv-back" onclick="closeStudy()">‹</button>
+    <div class="sv-title" id="svTitle">문제 풀기</div>
+    <div class="sv-mode">
+      <button class="sv-mBtn on" id="modeCard" onclick="setMode('card')">카드</button>
+      <button class="sv-mBtn" id="modeTiming" onclick="setMode('timing')">타이밍</button>
+    </div>
+  </div>
+  <div class="sv-prog"><div class="sv-prog-fill" id="svProg" style="width:0%"></div></div>
 
-<!-- 과목 탭 -->
-<div class="subject-bar" id="subjectBar">
-  <div class="stab on" data-sub="전체">전체</div>
-  <div class="stab" data-sub="전기자기학">전기자기학</div>
-  <div class="stab" data-sub="회로이론">회로이론</div>
-  <div class="stab" data-sub="전력공학">전력공학</div>
-  <div class="stab" data-sub="전기기기">전기기기</div>
-  <div class="stab" data-sub="제어공학">제어공학</div>
-  <div class="stab" data-sub="전기설비">전기설비</div>
-</div>
+  <div class="sv-body" id="svBody">
+    <!-- JS로 채워짐 -->
+  </div>
 
-<!-- 필터 칩 -->
-<div class="filter-wrap" id="filterWrap">
-  <div class="chip on" data-filter="전체">전체</div>
-  <div class="chip chip-o" data-filter="○">○ 맞음</div>
-  <div class="chip chip-t" data-filter="△">△ 애매</div>
-  <div class="chip chip-x" data-filter="×">× 틀림</div>
-  <div class="chip" data-filter="미풀이">미풀이</div>
-  <div class="chip" data-filter="어려움">🔴 어려움</div>
-  <div class="chip" data-filter="보통">🟡 보통</div>
-  <div class="chip" data-filter="쉬움">🟢 쉬움</div>
-</div>
-
-<!-- 통계 바 -->
-<div class="stats-bar" id="statsBar">
-  <div class="stat-item"><div class="stat-num" id="statTotal">0</div><div class="stat-label">전체</div></div>
-  <div class="stat-item"><div class="stat-num s-o" id="statO">0</div><div class="stat-label">○ 맞음</div></div>
-  <div class="stat-item"><div class="stat-num s-t" id="statT">0</div><div class="stat-label">△ 애매</div></div>
-  <div class="stat-item"><div class="stat-num s-x" id="statX">0</div><div class="stat-label">× 틀림</div></div>
-  <div class="stat-item"><div class="stat-num s-n" id="statN">0</div><div class="stat-label">미풀이</div></div>
-</div>
-
-<!-- 카드 목록 -->
-<div class="card-list" id="cardList">
-  <div class="empty-state" id="emptyState" style="display:none">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-    <p>등록된 문제가 없어요.<br>+ 버튼으로 문제를 추가하세요!</p>
+  <div class="sv-footer">
+    <button class="sv-ev-btn" id="sev1" onclick="studyEval('○')">○</button>
+    <button class="sv-ev-btn" id="sev2" onclick="studyEval('△')">△</button>
+    <button class="sv-ev-btn" id="sev3" onclick="studyEval('×')">×</button>
+    <div class="sv-spacer"></div>
+    <button class="sv-nav-btn" onclick="studyNav()">이동 &amp; 점수</button>
+    <button class="sv-end-btn" onclick="closeStudy()">종료</button>
   </div>
 </div>
 
-<!-- FAB -->
-<button class="fab" onclick="openModal()" aria-label="문제 추가">+</button>
-
-<!-- 문제 추가 모달 -->
+<!-- ══ 추가 모달 ══ -->
 <div class="modal-bg" id="modalBg" onclick="bgClose(event)">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">문제 추가</div>
-
     <div class="form-row">
       <label class="form-label">과목</label>
-      <select class="form-select" id="selSubject">
+      <select class="form-select" id="selSub">
         <option>전기자기학</option><option>회로이론</option><option>전력공학</option>
         <option>전기기기</option><option>제어공학</option><option>전기설비</option>
       </select>
     </div>
-
     <div class="form-row">
       <label class="form-label">난이도</label>
       <select class="form-select" id="selDiff">
@@ -220,27 +231,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <option value="어려움">🔴 어려움</option>
       </select>
     </div>
-
     <div class="form-row">
       <label class="form-label">문제 사진 <span style="color:#e53e3e">*</span></label>
       <div class="upload-box" id="qBox">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
-        <div>사진 선택 또는 카메라로 찍기</div>
-        <input type="file" id="qFile" accept="image/*" capture="environment" onchange="previewImg(this,'qPrev','qBox')">
+        📷 사진 선택 또는 카메라로 찍기
+        <input type="file" id="qFile" accept="image/*" onchange="previewImg(this,'qPrev','qBox','qPrevImg')">
       </div>
-      <div class="upload-preview" id="qPrev"><img id="qPrevImg" src="" alt="문제 미리보기"></div>
+      <div class="upload-preview" id="qPrev"><img id="qPrevImg" src="" alt=""></div>
     </div>
-
     <div class="form-row">
       <label class="form-label">정답·해설 사진 <span style="color:var(--text3)">(선택)</span></label>
       <div class="upload-box" id="aBox">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        <div>해설 사진 선택 또는 찍기</div>
-        <input type="file" id="aFile" accept="image/*" capture="environment" onchange="previewImg(this,'aPrev','aBox')">
+        📄 해설 사진 선택 또는 찍기
+        <input type="file" id="aFile" accept="image/*" onchange="previewImg(this,'aPrev','aBox','aPrevImg')">
       </div>
-      <div class="upload-preview" id="aPrev"><img id="aPrevImg" src="" alt="해설 미리보기"></div>
+      <div class="upload-preview" id="aPrev"><img id="aPrevImg" src="" alt=""></div>
     </div>
-
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal()">취소</button>
       <button class="btn-save" id="btnSave" onclick="saveCard()">저장하기</button>
@@ -248,364 +254,331 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- 로딩 -->
-<div class="loading" id="loading">
-  <div class="spinner"></div>
-  <div id="loadingMsg">저장 중...</div>
-</div>
-
-<!-- 토스트 -->
+<div class="loading" id="loading"><div class="spinner"></div><div id="loadingMsg">저장 중...</div></div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════════════════
-// 🔥 여기에 Firebase 설정을 입력하세요
-// ════════════════════════════════════════════
+// ════ Firebase ════
 const firebaseConfig = {
   apiKey: "AIzaSyCM3W7mtqLAgnCi_iNnNit73KE-BO2sP4k",
   authDomain: "elecstudy-c9992.firebaseapp.com",
   projectId: "elecstudy-c9992",
   storageBucket: "elecstudy-c9992.firebasestorage.app",
   messagingSenderId: "491874108429",
-  appId: "1:491874108429:web:35f92454ad83f031b40144",
-  measurementId: "G-QM6TF2RWSB"
+  appId: "1:491874108429:web:35f92454ad83f031b40144"
 };
-// ════════════════════════════════════════════
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-const IS_CONFIGURED = !firebaseConfig.apiKey.includes('YOUR');
+let cards = [], curSub = '전체', curFilter = '전체';
+let studyList = [], studyIdx = 0;
 
-let db, cards = [], currentSub = '전체', currentFilter = '전체';
-
-// Firebase 초기화
-if(IS_CONFIGURED){
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-  document.getElementById('setupBanner').style.display = 'none';
-  loadCards();
-} else {
-  // 데모 모드 - 샘플 데이터
-  document.getElementById('setupBanner').style.display = 'block';
-  cards = [
-    {id:'demo1', subject:'회로이론', diff:'어려움', reads:3, eval:'', qUrl:'', aUrl:'', createdAt:new Date()},
-    {id:'demo2', subject:'전기자기학', diff:'보통', reads:1, eval:'○', qUrl:'', aUrl:'', createdAt:new Date()},
-    {id:'demo3', subject:'전력공학', diff:'쉬움', reads:0, eval:'', qUrl:'', aUrl:'', createdAt:new Date()},
-  ];
+// ════ 로드 ════
+db.collection('cards').orderBy('createdAt','desc').limit(200).onSnapshot(snap => {
+  cards = snap.docs.map(d => ({id:d.id, ...d.data()}));
   renderAll();
+  hideLoading();
+}, err => {
+  hideLoading();
+  showToast('로드 실패: ' + err.message);
+});
+showLoading('불러오는 중...');
+
+// ════ 렌더링 ════
+function getFiltered(){
+  let list = cards.filter(c => curSub==='전체' || c.subject===curSub);
+  if(curFilter==='○') list=list.filter(c=>c.eval==='○');
+  else if(curFilter==='△') list=list.filter(c=>c.eval==='△');
+  else if(curFilter==='×') list=list.filter(c=>c.eval==='×');
+  else if(curFilter==='미풀이') list=list.filter(c=>!c.eval);
+  else if(['어려움','보통','쉬움'].includes(curFilter)) list=list.filter(c=>c.diff===curFilter);
+  return list;
 }
 
-// ── 데이터 로드 ──────────────────────────────
-function loadCards(){
-  showLoading('불러오는 중...');
-  db.collection('cards').orderBy('createdAt','desc').limit(100).onSnapshot(snap => {
-    cards = snap.docs.map(d => ({id:d.id, ...d.data()}));
-    renderAll();
-    hideLoading();
-  }, err => {
-    hideLoading();
-    showToast('데이터 로드 실패: ' + err.message);
-  });
-}
-
-// ── 렌더링 ──────────────────────────────────
-function renderAll(){
-  updateStats();
-  renderCards();
-}
+function renderAll(){ updateStats(); renderCards(); }
 
 function updateStats(){
-  const filtered = cards.filter(c => currentSub === '전체' || c.subject === currentSub);
-  document.getElementById('statTotal').textContent = filtered.length;
-  document.getElementById('statO').textContent = filtered.filter(c=>c.eval==='○').length;
-  document.getElementById('statT').textContent = filtered.filter(c=>c.eval==='△').length;
-  document.getElementById('statX').textContent = filtered.filter(c=>c.eval==='×').length;
-  document.getElementById('statN').textContent = filtered.filter(c=>!c.eval).length;
+  const f = cards.filter(c=>curSub==='전체'||c.subject===curSub);
+  document.getElementById('stTotal').textContent=f.length;
+  document.getElementById('stO').textContent=f.filter(c=>c.eval==='○').length;
+  document.getElementById('stT').textContent=f.filter(c=>c.eval==='△').length;
+  document.getElementById('stX').textContent=f.filter(c=>c.eval==='×').length;
+  document.getElementById('stN').textContent=f.filter(c=>!c.eval).length;
 }
 
 function renderCards(){
-  const list = document.getElementById('cardList');
-  const empty = document.getElementById('emptyState');
-
-  let filtered = cards.filter(c => currentSub === '전체' || c.subject === currentSub);
-
-  if(currentFilter === '○') filtered = filtered.filter(c=>c.eval==='○');
-  else if(currentFilter === '△') filtered = filtered.filter(c=>c.eval==='△');
-  else if(currentFilter === '×') filtered = filtered.filter(c=>c.eval==='×');
-  else if(currentFilter === '미풀이') filtered = filtered.filter(c=>!c.eval);
-  else if(['어려움','보통','쉬움'].includes(currentFilter)) filtered = filtered.filter(c=>c.diff===currentFilter);
-
-  // 기존 카드 제거 (emptyState 제외)
-  Array.from(list.children).forEach(el => {if(el.id !== 'emptyState') el.remove()});
-
-  if(filtered.length === 0){
-    empty.style.display = 'block';
-    return;
-  }
-  empty.style.display = 'none';
-
-  filtered.forEach((card, idx) => {
-    list.insertBefore(makeCard(card, idx + 1), empty);
-  });
+  const list=document.getElementById('cardList');
+  const empty=document.getElementById('emptyState');
+  Array.from(list.children).forEach(el=>{if(el.id!=='emptyState')el.remove();});
+  const filtered=getFiltered();
+  if(filtered.length===0){empty.style.display='block';return;}
+  empty.style.display='none';
+  filtered.forEach((card,idx)=>list.insertBefore(makeListCard(card,idx+1),empty));
 }
 
-function makeCard(card, num){
-  const el = document.createElement('div');
-  el.className = 'q-card';
-  el.id = 'card-' + card.id;
+function diffBadge(d){ return d==='어려움'?'b-h':d==='보통'?'b-m':'b-e'; }
+function diffIcon(d){ return d==='어려움'?'🔴':d==='보통'?'🟡':'🟢'; }
 
-  const diffBadge = card.diff === '어려움' ? 'badge-h' : card.diff === '보통' ? 'badge-m' : 'badge-e';
-  const diffIcon = card.diff === '어려움' ? '🔴' : card.diff === '보통' ? '🟡' : '🟢';
-
-  const reads = card.reads || 0;
-
-  el.innerHTML = `
-    <div class="q-top">
-      <div class="q-badges">
-        <span class="q-no">Q.${String(num).padStart(2,'0')}</span>
-        <span class="badge badge-sub">${card.subject}</span>
-        <span class="badge ${diffBadge}">${diffIcon} ${card.diff}</span>
+function makeListCard(card, num){
+  const el=document.createElement('div');
+  el.className='q-card';
+  el.id='lc-'+card.id;
+  const e=card.eval||'';
+  el.innerHTML=`
+    <div class="q-card-head">
+      <div class="q-meta">
+        <span class="q-num">${num}</span>
+        <span class="badge b-sub">${card.subject}</span>
+        <span class="badge ${diffBadge(card.diff)}">${diffIcon(card.diff)} ${card.diff}</span>
       </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span class="read-info">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-          ${reads}회독
-        </span>
-        <button onclick="deleteCard('${card.id}')" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:#ccc;font-size:16px" title="삭제">×</button>
+      <div class="q-actions">
+        <button class="del-btn" onclick="deleteCard('${card.id}')">🗑</button>
       </div>
     </div>
-    <div class="q-body">
-      <div class="q-img-wrap" id="qwrap-${card.id}">
-        ${card.qUrl
-          ? `<img src="${card.qUrl}" alt="문제" loading="lazy" onload="this.parentElement.style.background='transparent'" onerror="this.parentElement.innerHTML='<div class=q-placeholder><svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\'/><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'/><path d=\\'m21 15-5-5L5 21\\'/></svg><span>이미지를 불러올 수 없어요</span></div>'">`
-          : `<div class="q-placeholder">
-               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;opacity:.3"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
-               <span>문제 사진 없음 (데모)</span>
-             </div>`
-        }
-      </div>
+    <div class="q-img">
+      ${card.qUrl?`<img src="${card.qUrl}" alt="문제" loading="lazy">`:`<div class="q-no-img">문제 사진 없음</div>`}
     </div>
-    <button class="reveal-btn" id="rb-${card.id}" onclick="toggleAns('${card.id}')">
-      <span class="rb-label">정답·해설 보기</span>
-    </button>
-    <div class="ans-section" id="ans-${card.id}">
-      <div class="ans-inner">
-        <div class="ans-label">✅ 정답 및 해설</div>
-        <div class="ans-img-wrap">
-          ${card.aUrl
-            ? `<img src="${card.aUrl}" alt="해설" loading="lazy">`
-            : `<div class="ans-no-img">해설 사진이 없습니다</div>`
-          }
-        </div>
-      </div>
+    <div class="mini-eval">
+      <button class="me-btn ${e==='○'?'ev-o':''}" id="me-${card.id}-1" onclick="setEval('${card.id}','○')">○<span class="me-lbl">맞음</span></button>
+      <button class="me-btn ${e==='△'?'ev-t':''}" id="me-${card.id}-2" onclick="setEval('${card.id}','△')">△<span class="me-lbl">애매</span></button>
+      <button class="me-btn ${e==='×'?'ev-x':''}" id="me-${card.id}-3" onclick="setEval('${card.id}','×')">×<span class="me-lbl">틀림</span></button>
     </div>
-    <div class="eval-row">
-      <button class="eval-btn ${card.eval==='○'?'ev-o':''}" id="ev-${card.id}-1" onclick="setEval('${card.id}','○')">○<span class="elabel">맞음</span></button>
-      <button class="eval-btn ${card.eval==='△'?'ev-t':''}" id="ev-${card.id}-2" onclick="setEval('${card.id}','△')">△<span class="elabel">애매</span></button>
-      <button class="eval-btn ${card.eval==='×'?'ev-x':''}" id="ev-${card.id}-3" onclick="setEval('${card.id}','×')">×<span class="elabel">틀림</span></button>
-    </div>
+    <button class="open-study-btn" onclick="startStudy('${card.id}')">정답 보기 →</button>
   `;
   return el;
 }
 
-// ── 해설 토글 ────────────────────────────────
-function toggleAns(id){
-  const sec = document.getElementById('ans-' + id);
-  const btn = document.getElementById('rb-' + id);
-  if(!sec || !btn) return;
-  const open = sec.classList.toggle('open');
-  const label = btn.querySelector('.rb-label');
-  if(label) label.textContent = open ? '해설 닫기' : '정답·해설 보기';
-
-  const card = cards.find(c => c.id === id);
-  if(card && open){
-    card.reads = (card.reads || 0) + 1;
-    if(IS_CONFIGURED) db.collection('cards').doc(id).update({reads: firebase.firestore.FieldValue.increment(1)});
-    const ri = btn.closest('.q-card').querySelector('.read-info');
-    if(ri) ri.textContent = card.reads + '회독';
-  }
-}
-
-// ── 자기평가 ─────────────────────────────────
-function setEval(id, val){
-  const card = cards.find(c => c.id === id);
-  if(!card) return;
-
-  const prev = card.eval;
-  card.eval = prev === val ? '' : val;  // 같은 거 누르면 취소
-
-  [['○','1','ev-o'],['△','2','ev-t'],['×','3','ev-x']].forEach(([e, n, cls]) => {
-    const btn = document.getElementById(`ev-${id}-${n}`);
-    if(!btn) return;
-    btn.className = 'eval-btn';
-    if(card.eval === e) btn.classList.add(cls);
+// ════ 자기평가 ════
+function setEval(id,val){
+  const card=cards.find(c=>c.id===id);
+  if(!card)return;
+  card.eval=card.eval===val?'':val;
+  db.collection('cards').doc(id).update({eval:card.eval});
+  [['○','1','ev-o'],['△','2','ev-t'],['×','3','ev-x']].forEach(([sym,n,cls])=>{
+    const btn=document.getElementById(`me-${id}-${n}`);
+    if(btn) btn.className='me-btn'+(card.eval===sym?' '+cls:'');
   });
-
-  if(IS_CONFIGURED) db.collection('cards').doc(id).update({eval: card.eval});
   updateStats();
 }
 
-// ── 이미지 → Base64 변환 ─────────────────────
-function fileToBase64(file){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+// ════ 삭제 ════
+async function deleteCard(id){
+  if(!confirm('이 문제를 삭제할까요?'))return;
+  await db.collection('cards').doc(id).delete();
+  showToast('삭제됐어!');
 }
 
-// ── 이미지 압축 (Firestore 1MB 문서 제한 대응) ──
-function compressImage(file, maxWidthPx = 800, quality = 0.6){
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let w = img.width, h = img.height;
-        if(w > maxWidthPx){ h = Math.round(h * maxWidthPx / w); w = maxWidthPx; }
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+// ════ 학습 화면 ════
+function startStudy(startId){
+  studyList=getFiltered();
+  if(studyList.length===0){showToast('문제가 없어요');return;}
+  studyIdx=startId?Math.max(0,studyList.findIndex(c=>c.id===startId)):0;
+  document.getElementById('svTitle').textContent=(curSub==='전체'?'전체':curSub)+' 문제';
+  renderStudySlide();
+  document.getElementById('studyView').classList.add('active');
+}
+
+function closeStudy(){
+  document.getElementById('studyView').classList.remove('active');
+}
+
+function renderStudySlide(){
+  const card=studyList[studyIdx];
+  if(!card)return;
+
+  // 진행률
+  document.getElementById('svProg').style.width=((studyIdx+1)/studyList.length*100)+'%';
+
+  // 본문 렌더
+  const body=document.getElementById('svBody');
+  body.innerHTML=`
+    <div class="sv-qcard">
+      <div class="sv-qcard-top">
+        <div class="sv-qcard-meta">
+          <span>${studyIdx+1} / ${studyList.length}</span>
+          <span class="badge b-sub">${card.subject}</span>
+          <span class="badge ${diffBadge(card.diff)}">${diffIcon(card.diff)} ${card.diff}</span>
+        </div>
+      </div>
+      <div class="sv-qimg">
+        ${card.qUrl?`<img src="${card.qUrl}" alt="문제">`:`<div class="q-no-img" style="padding:40px 0">문제 사진 없음</div>`}
+      </div>
+      <button class="sv-ans-btn" id="ansBtnInner" onclick="toggleAnsSection()">정답 보기</button>
+      <div class="sv-ans-section" id="ansSec">
+        <div class="sv-ans-inner">
+          <div class="sv-ans-lbl">✅ 태솔</div>
+          ${card.aUrl?`<div class="sv-ans-img"><img src="${card.aUrl}" alt="해설"></div>`:`<div class="sv-ans-noimg">해설 사진이 없습니다</div>`}
+        </div>
+      </div>
+    </div>
+    <div class="sv-memo">답을 확인하기 전에 먼저 답을 작성해 보세요.</div>
+  `;
+  body.scrollTop=0;
+
+  // 평가 버튼
+  const e=card.eval||'';
+  document.getElementById('sev1').className='sv-ev-btn'+(e==='○'?' ev-o':'');
+  document.getElementById('sev2').className='sv-ev-btn'+(e==='△'?' ev-t':'');
+  document.getElementById('sev3').className='sv-ev-btn'+(e==='×'?' ev-x':'');
+}
+
+function toggleAnsSection(){
+  const sec=document.getElementById('ansSec');
+  const btn=document.getElementById('ansBtnInner');
+  if(!sec||!btn)return;
+  const opening=!sec.classList.contains('open');
+  sec.classList.toggle('open');
+  btn.textContent=opening?'정답 가리기':'정답 보기';
+  if(opening){
+    const card=studyList[studyIdx];
+    if(card){
+      card.reads=(card.reads||0)+1;
+      db.collection('cards').doc(card.id).update({reads:firebase.firestore.FieldValue.increment(1)});
+    }
+  }
+}
+
+function studyEval(val){
+  const card=studyList[studyIdx];
+  if(!card)return;
+  card.eval=card.eval===val?'':val;
+  db.collection('cards').doc(card.id).update({eval:card.eval});
+  const e=card.eval;
+  document.getElementById('sev1').className='sv-ev-btn'+(e==='○'?' ev-o':'');
+  document.getElementById('sev2').className='sv-ev-btn'+(e==='△'?' ev-t':'');
+  document.getElementById('sev3').className='sv-ev-btn'+(e==='×'?' ev-x':'');
+  [['○','1','ev-o'],['△','2','ev-t'],['×','3','ev-x']].forEach(([sym,n,cls])=>{
+    const btn=document.getElementById(`me-${card.id}-${n}`);
+    if(btn)btn.className='me-btn'+(e===sym?' '+cls:'');
+  });
+  updateStats();
+  // 자동 다음 문제
+  if(e && studyIdx < studyList.length-1){
+    setTimeout(()=>{ studyIdx++; renderStudySlide(); },300);
+  }
+}
+
+function studyNav(){
+  const total=studyList.length;
+  const done=studyList.filter(c=>c.eval).length;
+  const o=studyList.filter(c=>c.eval==='○').length;
+  const t=studyList.filter(c=>c.eval==='△').length;
+  const x=studyList.filter(c=>c.eval==='×').length;
+  const input=prompt(`이동할 번호 (1~${total})\n\n진행: ${done}/${total}문제\n○ ${o}  △ ${t}  × ${x}`);
+  if(input===null)return;
+  const n=parseInt(input)-1;
+  if(n>=0&&n<total){studyIdx=n;renderStudySlide();}
+  else showToast('올바른 번호를 입력하세요');
+}
+
+function setMode(m){
+  document.getElementById('modeCard').className='sv-mBtn'+(m==='card'?' on':'');
+  document.getElementById('modeTiming').className='sv-mBtn'+(m==='timing'?' on':'');
+}
+
+// 스와이프
+let _tx=0;
+document.getElementById('svBody').addEventListener('touchstart',e=>{_tx=e.touches[0].clientX;},{passive:true});
+document.getElementById('svBody').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-_tx;
+  if(Math.abs(dx)<60)return;
+  if(dx<0&&studyIdx<studyList.length-1){studyIdx++;renderStudySlide();}
+  if(dx>0&&studyIdx>0){studyIdx--;renderStudySlide();}
+},{passive:true});
+
+// ════ 탭/필터 ════
+document.getElementById('stabWrap').addEventListener('click',e=>{
+  const btn=e.target.closest('.stab');
+  if(!btn)return;
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  curSub=btn.dataset.sub;
+  renderAll();
+});
+document.getElementById('filterBar').addEventListener('click',e=>{
+  const btn=e.target.closest('.chip');
+  if(!btn)return;
+  document.querySelectorAll('.chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  curFilter=btn.dataset.f;
+  renderAll();
+});
+
+// ════ 모달 ════
+function openModal(){document.getElementById('modalBg').classList.add('open');}
+function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+function bgClose(e){if(e.target===document.getElementById('modalBg'))closeModal();}
+
+function previewImg(input,prevId,boxId,imgId){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.getElementById(imgId).src=e.target.result;
+    document.getElementById(prevId).style.display='block';
+    document.getElementById(boxId).style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function compressImage(file,maxW=800,q=0.65){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',q));
       };
-      img.src = e.target.result;
+      img.src=e.target.result;
     };
     reader.readAsDataURL(file);
   });
 }
 
-// ── 문제 저장 (Base64 → Firestore) ───────────
 async function saveCard(){
-  const qFile = document.getElementById('qFile').files[0];
-  const aFile = document.getElementById('aFile').files[0];
-  const subject = document.getElementById('selSubject').value;
-  const diff = document.getElementById('selDiff').value;
-
-  if(!IS_CONFIGURED){
-    showToast('Firebase 설정 후 저장 가능합니다');
-    return;
-  }
-  if(!qFile){
-    showToast('문제 사진을 선택하세요');
-    return;
-  }
-
-  document.getElementById('btnSave').disabled = true;
+  const qFile=document.getElementById('qFile').files[0];
+  const aFile=document.getElementById('aFile').files[0];
+  if(!qFile){showToast('문제 사진을 선택하세요');return;}
+  document.getElementById('btnSave').disabled=true;
   showLoading('사진 압축 중...');
-
-  try {
-    // 문제 사진 압축 → Base64
-    showLoading('문제 사진 변환 중...');
-    const qUrl = await compressImage(qFile);
-
-    // 해설 사진 압축 → Base64 (선택)
-    let aUrl = '';
-    if(aFile){
-      showLoading('해설 사진 변환 중...');
-      aUrl = await compressImage(aFile);
-    }
-
-    // Firestore 저장
+  try{
+    const qUrl=await compressImage(qFile);
+    let aUrl='';
+    if(aFile){showLoading('해설 사진 압축 중...');aUrl=await compressImage(aFile);}
     showLoading('저장 중...');
     await db.collection('cards').add({
-      subject, diff,
-      qUrl, aUrl,
-      eval: '',
-      reads: 0,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      subject:document.getElementById('selSub').value,
+      diff:document.getElementById('selDiff').value,
+      qUrl,aUrl,eval:'',reads:0,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-
     hideLoading();
     closeModal();
-    showToast('✅ 문제가 저장됐어!');
-    resetModal();
-  } catch(e){
+    showToast('✅ 저장 완료!');
+    document.getElementById('qFile').value='';
+    document.getElementById('aFile').value='';
+    document.getElementById('qPrev').style.display='none';
+    document.getElementById('aPrev').style.display='none';
+    document.getElementById('qBox').style.display='';
+    document.getElementById('aBox').style.display='';
+  }catch(err){
     hideLoading();
-    console.error(e);
-    showToast('저장 실패: ' + e.message);
+    showToast('저장 실패: '+err.message);
+    console.error(err);
   }
-  document.getElementById('btnSave').disabled = false;
+  document.getElementById('btnSave').disabled=false;
 }
 
-// ── 삭제 ────────────────────────────────────
-async function deleteCard(id){
-  if(!confirm('이 문제를 삭제할까요?')) return;
-  if(IS_CONFIGURED){
-    await db.collection('cards').doc(id).delete();
-    showToast('삭제됐어!');
-  } else {
-    cards = cards.filter(c => c.id !== id);
-    renderAll();
-  }
-}
-
-// ── 탭 / 필터 ────────────────────────────────
-document.querySelectorAll('.stab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.stab').forEach(x => x.classList.remove('on'));
-    t.classList.add('on');
-    currentSub = t.dataset.sub;
-    renderAll();
-  });
-});
-document.querySelectorAll('.chip').forEach(c => {
-  c.addEventListener('click', () => {
-    document.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
-    c.classList.add('on');
-    currentFilter = c.dataset.filter;
-    renderAll();
-  });
-});
-
-// ── 모달 ────────────────────────────────────
-function openModal(){ document.getElementById('modalBg').classList.add('open') }
-function closeModal(){ document.getElementById('modalBg').classList.remove('open') }
-function bgClose(e){ if(e.target === document.getElementById('modalBg')) closeModal() }
-function resetModal(){
-  document.getElementById('qFile').value = '';
-  document.getElementById('aFile').value = '';
-  document.getElementById('qPrev').style.display = 'none';
-  document.getElementById('aPrev').style.display = 'none';
-  document.getElementById('qBox').style.display = 'block';
-  document.getElementById('aBox').style.display = 'block';
-}
-
-// ── 이미지 미리보기 ──────────────────────────
-function previewImg(input, prevId, boxId){
-  const file = input.files[0];
-  if(!file) return;
-  const prev = document.getElementById(prevId);
-  const box = document.getElementById(boxId);
-  const img = prev.querySelector('img');
-  const reader = new FileReader();
-  reader.onload = e => {
-    img.src = e.target.result;
-    prev.style.display = 'block';
-    box.style.display = 'none';
-  };
-  reader.readAsDataURL(file);
-}
-
-// ── 검색 ────────────────────────────────────
-function toggleSearch(){
-  const kw = prompt('검색어 입력 (과목명)');
-  if(kw === null) return;
-  if(!kw.trim()){ currentSub = '전체'; renderAll(); return; }
-  // 간단히 제목 필터
-  const list = document.getElementById('cardList');
-  const empty = document.getElementById('emptyState');
-  const filtered = cards.filter(c => c.subject.includes(kw));
-  Array.from(list.children).forEach(el => {if(el.id !== 'emptyState') el.remove()});
-  if(filtered.length === 0){ empty.style.display='block'; return; }
-  empty.style.display = 'none';
-  filtered.forEach((card, idx) => list.insertBefore(makeCard(card, idx+1), empty));
-}
-
-// ── 유틸 ────────────────────────────────────
-function showLoading(msg){ const l=document.getElementById('loading'); l.classList.add('show'); document.getElementById('loadingMsg').textContent=msg||''; }
-function hideLoading(){ document.getElementById('loading').classList.remove('show') }
+function showLoading(msg){document.getElementById('loading').classList.add('show');document.getElementById('loadingMsg').textContent=msg||'';}
+function hideLoading(){document.getElementById('loading').classList.remove('show');}
 function showToast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
+  t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 </script>
